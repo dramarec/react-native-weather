@@ -5,7 +5,7 @@ import {
     TextInput,
     StyleSheet,
     Dimensions,
-    // Text,
+    Text,
 } from 'react-native';
 // import { EvilIcons } from '@expo/vector-icons';
 
@@ -18,9 +18,8 @@ const SearchBar = ({ fetchWeatherData }) => {
                 placeholder="Enter City name"
                 value={cityName}
                 onChangeText={text => setCityName(text)}
-                onPress={() => fetchWeatherData(cityName)}
             />
-            {/* <Text onPress={() => fetchWeatherData(cityName)}>Search</Text> */}
+            <Text onPress={() => fetchWeatherData(cityName)}>Search</Text>
             {/* <EvilIcons name="search" size={28} color="black" onPress={() => fetchWeatherData(cityName)} /> */}
         </View>
     );

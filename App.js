@@ -147,21 +147,47 @@ import Weather from './components/Weather';
 import SearchBar from './components/SearchBar';
 // import Geolocation from 'react-native-geolocation-service';
 import Geolocation from '@react-native-community/geolocation';
+import Geocoder from 'react-native-geocoding';
 
-import { API_KEY } from '@env';
-console.log('🔥🚀 ===> App ===> API_KEY ', API_KEY);
 
+import { API_KEY, API_GEO } from '@env';
+
+Geocoder.init(API_GEO);
 
 export default function App() {
     const [weatherData, setWeatherData] = useState(null);
     const [loaded, setLoaded] = useState(true);
     const [positions, setPositions] = useState({ lat: null, lon: null });
-    console.log('🔥🚀 ===> App ===> positions', positions);
+    // console.log('🔥🚀 ===> App ===> positions', positions);
+
+    // const { lat, lon } = positions;
+    // console.log('🔥🚀 ===> App ===> lat', lat);
+    // console.log('🔥🚀 ===> App ===> lon', lon);
+
+    // Geocoder.from(50.451306, 30.520944)
+    // Geocoder.from(41.89, 12.49)
+    // Geocoder.from(positions.lat, positions.lon)
+    //     .then(json => {
+    //         console.log('🔥🚀 ===> App ===> positions.lon', positions.lon);
+    //         console.log('🔥🚀 ===> App ===> json', json);
+    //         const addressComponent = json.results[0].address_components;
+    //         console.log('🔥🚀 ===> App ===> addressComponent', addressComponent[3].long_name);
+    //     })
+    //     .catch(error => console.warn(error));
+
+    // ! to geocoder
+    // const getAddress = async (lat, lon) => {
+    //     Geocoder.fallbackToGoogle('AIzaSyCTmt0kX3OfmKyuVkKSclfnE5skfTVD4gM');
+    //     let response = await Geocoder.geocoderPosition({ lat, lon });
+    // };
+
 
     // async function fetchWeatherData(positions) {
-    const fetchWeatherData = async (position) => {
+    const fetchWeatherData = async (cityName) => {
         setLoaded(false);
-        const API = `https://api.openweathermap.org/data/2.5/weather?lat=${position.lat}&lon=${position.lon}&appid=${API_KEY}`;
+        // const API = `https://api.openweathermap.org/data/2.5/weather?lat=${position.lat}&lon=${position.lon}&appid=${API_KEY}`;
+        const API = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}`;
+
 
         try {
             const response = await fetch(API);
@@ -176,40 +202,31 @@ export default function App() {
             console.log('🔥🚀 ===> fetchWeather ===> error', error);
         }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     const location = useCallback(() => {
         const getLocation = async () => {
-            // Platform.OS === 'ios' ?
-            // Geolocation.getCurrentPosition(
-            //     position => {
-            //         console.log('🚀 position =>', position);
-            //         setPositions({
-            //             lat: position.coords.latitude,
-            //             lon: position.coords.longitude,
-            //         });
-            //     },
-            //     error => {
-            //         // See error code charts below.
-            //         console.log(error.code, error.message);
-            //     },
-            //     { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-            // ) :
             const granted = await PermissionsAndroid.request(
                 PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
             );
-            if (granted === PermissionsAndroid.RESULTS.GRANTED || Platform.OS === 'ios') {
+            if (Platform.OS === 'ios' || granted === PermissionsAndroid.RESULTS.GRANTED) {
                 console.log('!!!Yoy hew PermissionsAndroid!!!');
 
-                Geolocation.getCurrentPosition(
-                    position => {
-                        console.log('position=>', position);
-                        setPositions({
-                            lat: position.coords.latitude,
-                            lon: position.coords.longitude,
-                        });
-                    },
+                Geolocation.getCurrentPosition(position => {
+                    Geocoder.from(position.coords.latitude, position.coords.longitude)
+                        .then(json => {
+                            console.log('🔥🚀 ===> App ===> json', json);
+                            const addressComponent = json.results[0].address_components;
+                            // console.log('🔥🚀 ===> App ===> addressComponent', addressComponent[3].long_name);
+                            setPositions(addressComponent[3].long_name);
+                        })
+                        .catch(error => console.warn(error));
+                    // console.log('position=>', position);
+                    // setPositions({
+                    //     lat: position.coords.latitude,
+                    //     lon: position.coords.longitude,
+                    // });
+                },
                     error => {
-                        // See error code charts below.
                         console.log(error.code, error.message);
                     },
                     { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
@@ -217,7 +234,7 @@ export default function App() {
             }
         };
         getLocation();
-    });
+    }, []);
 
 
     useEffect(() => {
@@ -240,9 +257,12 @@ export default function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // useEffect(() => {
+    //     fetchWeatherData(positions);
+    // }, [positions]);
     useEffect(() => {
-        fetchWeatherData(positions);
-    }, [positions]);
+        fetchWeatherData();
+    }, []);
 
     if (!loaded) {
         return (
